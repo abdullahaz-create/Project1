@@ -1,23 +1,7 @@
 {
-  "services": {
-    "frontend": {
-      "root": "frontend",
-      "framework": "vite"
-    },
-    "backend": {
-      "root": "backend",
-      "startCommand": "node src/index.js",
-      "installCommand": "npm install && npx prisma generate"
-    }
-  },
+  "buildCommand": "cd backend && npm install && npx prisma generate && cd ../frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": { "service": "backend" }
-    },
-    {
-      "source": "/(.*)",
-      "destination": { "service": "frontend" }
-    }
+    { "source": "/api/:path*", "destination": "/api/index" }
   ]
 }
