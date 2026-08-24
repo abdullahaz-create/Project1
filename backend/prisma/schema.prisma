@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Student {
+  id               Int          @id @default(autoincrement())
+  name             String
+  classLevel       Int
+  registrationDate DateTime     @default(now())
+  remarks          String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  attendance Attendance[]
+  results    Result[]
+  fees       Fee[]
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  date      DateTime @db.Date
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+}
+
+model Subject {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  results Result[]
+}
+
+model Exam {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  results Result[]
+}
+
+model Result {
+  id            Int   @id @default(autoincrement())
+  studentId     Int
+  examId        Int
+  subjectId     Int
+  obtainedMarks Float
+  totalMarks    Float
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, examId, subjectId])
+}
+
+model Fee {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  month     Int
+  year      Int
+  amount    Float    @default(0)
+  isPaid    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, month, year])
+}
