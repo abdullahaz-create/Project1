@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import ClassDashboard from './pages/ClassDashboard';
+import StatsDashboard from './pages/StatsDashboard';
 
 function ProtectedRoute({ children }) {
   const { isLoggedIn } = useAuth();
@@ -20,6 +21,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ClassDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <StatsDashboard />
               </ProtectedRoute>
             }
           />

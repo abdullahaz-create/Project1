@@ -133,11 +133,18 @@ function ResultForm({ student, onDone }) {
 
   useEffect(() => {
     Promise.all([api.get('/results/subjects'), api.get('/exams')]).then(([s, e]) => {
-      setSubjects(s.data);
+      // Filter subjects to only those the student is enrolled in
+      const allSubs = s.data;
+      const enrolled = student.subjects && student.subjects.length > 0
+        ? allSubs.filter(sub => (student.subjects || []).includes(sub.name))
+        : allSubs;
+      setSubjects(enrolled);
       setExams(e.data);
-      if (e.data.length > 0) setExamId(e.data[0].id);
+      // Prefer 'Test' exam, fallback to first
+      const testExam = e.data.find(ex => ex.name === 'Test') || e.data[0];
+      if (testExam) setExamId(testExam.id);
       const init = {};
-      s.data.forEach(sub => { init[sub.id] = { obtained: '', total: '100' }; });
+      enrolled.forEach(sub => { init[sub.id] = { obtained: '', total: '100' }; });
       setMarks(init);
     });
   }, []);
@@ -170,7 +177,10 @@ function ResultForm({ student, onDone }) {
       <div>
         <label className="label-base">Exam / Test</label>
         <select className="input-base" value={examId} onChange={e => setExamId(e.target.value)} required>
-          {exams.map(ex => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+          {exams.length > 0
+            ? exams.map(ex => <option key={ex.id} value={ex.id}>{ex.name}</option>)
+            : <option value="test">Test</option>
+          }
         </select>
       </div>
       <div className="space-y-2">

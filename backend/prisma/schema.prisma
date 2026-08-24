@@ -12,6 +12,7 @@ model Student {
   classLevel       Int
   registrationDate DateTime     @default(now())
   remarks          String?
+  subjects         String[]     @default([])
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 

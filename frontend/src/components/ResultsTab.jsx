@@ -2,12 +2,17 @@ import { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
+// All available subjects — used as fallback if student has no subjects set
+const ALL_SUBJECTS = ['Math', 'Physics', 'Urdu', 'Computer', 'Chemistry', 'Bio', 'ISL'];
+
 function ResultModal({ student, subjects, exams, existingResults, onClose, onSaved }) {
-  const [examId, setExamId] = useState(exams[0]?.id || '');
+  // Always default to first exam (which will be 'Test' after seeding)
+  const testExam = exams.find(e => e.name === 'Test') || exams[0];
+  const [examId, setExamId] = useState(testExam?.id || '');
   const [marks, setMarks] = useState(() => {
     const initial = {};
     subjects.forEach(sub => {
-      const ex = existingResults.find(r => r.subjectId === sub.id && r.examId === (exams[0]?.id));
+      const ex = existingResults.find(r => r.subjectId === sub.id && r.examId === testExam?.id);
       initial[sub.id] = { obtained: ex ? ex.obtainedMarks : '', total: ex ? ex.totalMarks : '100' };
     });
     return initial;
@@ -61,7 +66,10 @@ function ResultModal({ student, subjects, exams, existingResults, onClose, onSav
           <div className="mb-4">
             <label className="label-base">Exam / Test</label>
             <select className="input-base" value={examId} onChange={e => handleExamChange(e.target.value)} required>
-              {exams.map(ex => <option key={ex.id} value={ex.id}>{ex.name}</option>)}
+              {exams.length > 0
+                ? exams.map(ex => <option key={ex.id} value={ex.id}>{ex.name}</option>)
+                : <option value="test">Test</option>
+              }
             </select>
           </div>
 
@@ -146,6 +154,13 @@ export default function ResultsTab({ classLevel }) {
         (selectedExam === 'all' || r.examId === parseInt(selectedExam))
       )
     : [];
+
+  // Subjects filtered to what the student is enrolled in
+  const studentSubjects = selectedStudent
+    ? (selectedStudent.subjects && selectedStudent.subjects.length > 0
+        ? subjects.filter(sub => (selectedStudent.subjects || []).includes(sub.name))
+        : subjects)
+    : subjects;
 
   // Group by exam
   const resultsByExam = studentResults.reduce((acc, r) => {
@@ -298,7 +313,11 @@ export default function ResultsTab({ classLevel }) {
       {editStudent && (
         <ResultModal
           student={editStudent}
-          subjects={subjects}
+          subjects={
+            editStudent.subjects && editStudent.subjects.length > 0
+              ? subjects.filter(sub => (editStudent.subjects || []).includes(sub.name))
+              : subjects
+          }
           exams={exams}
           existingResults={results.filter(r => r.studentId === editStudent.id)}
           onClose={() => setEditStudent(null)}

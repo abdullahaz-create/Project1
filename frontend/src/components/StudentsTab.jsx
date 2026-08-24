@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import QuickAddModal from './QuickAddModal';
 import StudentDetailsModal from './StudentDetailsModal';
 
+const ALL_SUBJECTS = ['Math', 'Physics', 'Urdu', 'Computer', 'Chemistry', 'Bio', 'ISL'];
+
 function formatDate(dateStr) {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -17,12 +19,26 @@ function StudentModal({ classLevel, student, onClose, onSaved }) {
       ? new Date(student.registrationDate).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0],
     remarks: student?.remarks || '',
+    subjects: student?.subjects || [],
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const toggleSubject = (sub) => {
+    setForm(prev => ({
+      ...prev,
+      subjects: prev.subjects.includes(sub)
+        ? prev.subjects.filter(s => s !== sub)
+        : [...prev.subjects, sub],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.subjects.length === 0) {
+      setError('Please select at least one subject.');
+      return;
+    }
     setError('');
     setSaving(true);
     try {
@@ -34,7 +50,7 @@ function StudentModal({ classLevel, student, onClose, onSaved }) {
         const res = await api.post('/students', form);
         saved = res.data;
       }
-      onSaved(saved, !student); // pass isNew flag
+      onSaved(saved, !student);
       onClose();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to save student');
@@ -68,6 +84,22 @@ function StudentModal({ classLevel, student, onClose, onSaved }) {
             </select>
           </div>
           <div>
+            <label className="label-base">Subjects *</label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {ALL_SUBJECTS.map(sub => (
+                <label key={sub} className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={form.subjects.includes(sub)}
+                    onChange={() => toggleSubject(sub)}
+                    className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  />
+                  <span className="text-sm text-gray-700 group-hover:text-gray-900">{sub}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
             <label className="label-base">Registration Date</label>
             <input type="date" className="input-base" value={form.registrationDate} onChange={e => setForm({...form, registrationDate: e.target.value})} />
           </div>
@@ -87,6 +119,7 @@ function StudentModal({ classLevel, student, onClose, onSaved }) {
     </div>
   );
 }
+
 
 function DeleteConfirm({ student, onClose, onDeleted }) {
   const [deleting, setDeleting] = useState(false);
@@ -175,8 +208,8 @@ export default function StudentsTab({ classLevel }) {
                 <tr>
                   <th>#</th>
                   <th>Name</th>
+                  <th>Subjects</th>
                   <th>Registration Date</th>
-                  <th>Remarks</th>
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
@@ -193,7 +226,16 @@ export default function StudentsTab({ classLevel }) {
                       </button>
                     </td>
                     <td className="text-gray-500">{formatDate(s.registrationDate)}</td>
-                    <td className="text-gray-500 text-xs max-w-xs truncate">{s.remarks || '-'}</td>
+                    <td>
+                      <div className="flex flex-wrap gap-1">
+                        {(s.subjects || []).length > 0
+                          ? (s.subjects || []).map(sub => (
+                              <span key={sub} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">{sub}</span>
+                            ))
+                          : <span className="text-xs text-gray-400">—</span>
+                        }
+                      </div>
+                    </td>
                     <td className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button

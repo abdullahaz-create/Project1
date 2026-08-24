@@ -44,7 +44,7 @@ router.get('/:id', auth, async (req, res) => {
 // POST /api/students
 router.post('/', auth, adminOnly, async (req, res) => {
   try {
-    const { name, classLevel, registrationDate, remarks } = req.body;
+    const { name, classLevel, registrationDate, remarks, subjects } = req.body;
     if (!name || !classLevel) {
       return res.status(400).json({ error: 'Name and classLevel are required' });
     }
@@ -59,6 +59,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
         classLevel: parseInt(classLevel),
         registrationDate: registrationDate ? new Date(registrationDate) : new Date(),
         remarks: remarks || null,
+        subjects: Array.isArray(subjects) ? subjects : [],
       },
     });
     res.status(201).json(student);
@@ -77,7 +78,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
 // PUT /api/students/:id
 router.put('/:id', auth, adminOnly, async (req, res) => {
   try {
-    const { name, classLevel, registrationDate, remarks } = req.body;
+    const { name, classLevel, registrationDate, remarks, subjects } = req.body;
     const student = await prisma.student.update({
       where: { id: parseInt(req.params.id) },
       data: {
@@ -85,6 +86,7 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
         ...(classLevel && { classLevel: parseInt(classLevel) }),
         ...(registrationDate && { registrationDate: new Date(registrationDate) }),
         remarks: remarks !== undefined ? remarks : undefined,
+        ...(Array.isArray(subjects) && { subjects }),
       },
     });
     res.json(student);

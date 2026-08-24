@@ -2,6 +2,21 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+// Seed required exam on startup
+async function seedExam() {
+  try {
+    const prisma = require('./lib/prisma');
+    await prisma.exam.upsert({
+      where: { name: 'Test' },
+      update: {},
+      create: { name: 'Test' },
+    });
+  } catch (e) {
+    // DB may not be ready yet; ignore silently
+  }
+}
+seedExam();
+
 function createApp() {
   const app = express();
 
@@ -42,6 +57,7 @@ function createApp() {
   app.use('/api/results', require('./routes/results'));
   app.use('/api/fees', require('./routes/fees'));
   app.use('/api/exams', require('./routes/exams'));
+  app.use('/api/stats', require('./routes/stats'));
 
   return app;
 }
