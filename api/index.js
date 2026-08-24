@@ -1,9 +1,17 @@
 // Vercel Serverless Function — entry point for all /api/* routes
 const path = require('path');
 
-// Load .env only in local development (Vercel uses dashboard env vars)
+// Load .env for local development.
+// On Vercel, env vars come from the dashboard — dotenv is a no-op if already set.
+require('dotenv').config({ path: path.join(__dirname, '../backend/.env') });
+
+// Safety check — warn loudly if critical env vars are missing.
+if (!process.env.JWT_SECRET) {
+  console.warn('[api/index] WARNING: JWT_SECRET is not set. Using insecure fallback. Set it in Vercel Environment Variables.');
+  process.env.JWT_SECRET = 'unique_science_academy_secure_secret_2026';
+}
 if (!process.env.DATABASE_URL) {
-  require('dotenv').config({ path: path.join(__dirname, '../backend/.env') });
+  console.warn('[api/index] WARNING: DATABASE_URL is not set. Database operations will fail.');
 }
 
 const createApp = require('../backend/src/app');
@@ -37,7 +45,6 @@ async function seedData() {
   }
 }
 
-// Run seeding immediately (async, non-blocking)
 seedData();
 
 module.exports = app;
