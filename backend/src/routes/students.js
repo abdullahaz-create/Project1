@@ -16,8 +16,14 @@ router.get('/', auth, async (req, res) => {
     });
     res.json(students);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('[students GET]', err);
+    res.status(500).json({
+      error: 'Server error',
+      detail: err.message,
+      hint: !process.env.DATABASE_URL
+        ? 'DATABASE_URL is not set in Vercel environment variables.'
+        : 'Check Vercel function logs for more details.',
+    });
   }
 });
 
@@ -30,7 +36,8 @@ router.get('/:id', auth, async (req, res) => {
     if (!student) return res.status(404).json({ error: 'Student not found' });
     res.json(student);
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('[students GET/:id]', err);
+    res.status(500).json({ error: 'Server error', detail: err.message });
   }
 });
 
@@ -40,6 +47,11 @@ router.post('/', auth, adminOnly, async (req, res) => {
     const { name, classLevel, registrationDate, remarks } = req.body;
     if (!name || !classLevel) {
       return res.status(400).json({ error: 'Name and classLevel are required' });
+    }
+    if (!process.env.DATABASE_URL) {
+      return res.status(500).json({
+        error: 'DATABASE_URL is not configured on this server. Go to Vercel → Project Settings → Environment Variables and add DATABASE_URL with your Neon connection string, then redeploy.',
+      });
     }
     const student = await prisma.student.create({
       data: {
@@ -51,8 +63,14 @@ router.post('/', auth, adminOnly, async (req, res) => {
     });
     res.status(201).json(student);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('[students POST]', err);
+    res.status(500).json({
+      error: 'Server error',
+      detail: err.message,
+      hint: !process.env.DATABASE_URL
+        ? 'DATABASE_URL environment variable is missing in Vercel.'
+        : 'Database may not be initialized. Run: npx prisma db push',
+    });
   }
 });
 
@@ -71,8 +89,8 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
     });
     res.json(student);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('[students PUT]', err);
+    res.status(500).json({ error: 'Server error', detail: err.message });
   }
 });
 
@@ -84,8 +102,8 @@ router.delete('/:id', auth, adminOnly, async (req, res) => {
     });
     res.json({ message: 'Student deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('[students DELETE]', err);
+    res.status(500).json({ error: 'Server error', detail: err.message });
   }
 });
 
